@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import praw
 import sys
@@ -21,28 +22,34 @@ def connect():
             username=cfg['username'],
             password=cfg['pw'])
 
-def get_file_location():
+def get_file_path():
     # Command-line options parser
     parser = argparse.ArgumentParser(description='Reddit bot that searches and posts MMA scorecards.')
-    parser.add_argument('-l', '--location', dest='location', help='Set the exp.')
+    parser.add_argument('-p', '--path', dest='path', help='Set the path for the exported file.')
     args = parser.parse_args()
 
-    if args.location is not None:
-        location = args.location
-        if not location.endswith("/") and not location.endswith("\\"):
-            if "\\" in location:
-                location += "\\"
+    if args.path is not None:
+        path = args.path
+        if not path.endswith("/") and not path.endswith("\\"):
+            if "\\" in path:
+                path += "\\"
             else:
-                location += "/"
-        return location + cfg['default_file_location']
+                path += "/"
+        return path + cfg['default_file_name']
     else:
-        return cfg['default_file_location']
+        return cfg['default_file_name']
 
+def save_and_delete_comments(file_path):
+    try:
+        file = open(file_path, 'w+')
+    except OSError:
+        print("Unable to create file \"%s\". Please check that the file path is valid.")
 
 def main():
     reddit = connect()
-    file_location = get_file_location()
-    logger.info("Deleting comments for user \"u/%s\" and saving to file \"%s\"...", cfg['username'], file_location)
+    file_path = get_file_path()
+    logger.info("Deleting comments for user \"u/%s\" and saving to file \"%s\"...", cfg['username'], file_path)
+    save_and_delete_comments(file_path)
 
 if __name__ == '__main__':
     main()

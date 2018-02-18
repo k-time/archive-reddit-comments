@@ -6,4 +6,4 @@ user_agent: "enter your user agent here"
 username: "enter your username here"
 pw: "enter your password here"
 
-default_file_location: "comments.json"
+default_file_name: "comments.json"

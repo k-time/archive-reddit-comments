@@ -2,7 +2,6 @@ import argparse
 from collections import OrderedDict
 import json
 import logging
-from pprint import pprint
 import praw
 import sys
 import time
@@ -50,43 +49,43 @@ def export_comments(reddit):
     logger.info("Saving all comments to file \"%s\"...", file_path)
     try:
         file = open(file_path, 'a+')
-        fields = (
-            'subreddit_name_prefixed',
-            'link_title',
-            'link_id',
-            'link_url',
-            'name',
-            'id',
-            'parent_id',
-            'created',
-            'created_utc',
-            'permalink',
-            'score',
-            'body',)
-        for comment in reddit.redditor(cfg['username']).comments.new(limit=5):
+        fields = ('subreddit_name_prefixed', 'link_title', 'link_id', 'link_url', 'name',
+                  'id', 'parent_id', 'created', 'created_utc', 'permalink', 'score', 'body',)
+        comment_list = []
+        # Reddit PRAW API only allows you to retrieve last 1000 comments; TBD when they will allow all
+        for comment in reddit.redditor(cfg['username']).comments.new(limit=None):
+            if comment.body == "[deleted]":
+                continue
             comment_dict = vars(comment)
             sub_dict = OrderedDict()
             for field in fields:
                 sub_dict[field] = comment_dict[field]
             sub_dict['permalink'] = 'https://www.reddit.com' + sub_dict['permalink']
-            # Convert to readable timestamp
+            # Convert time to readable timestamp
             sub_dict['local_time'] = time.strftime('%Y-%m-%d %I:%M:%S %p EST', time.localtime(sub_dict['created_utc']))
-            json_string = json.dumps(sub_dict, indent=4) + '\n'
-            file.write(json_string)
+            comment_list.append(sub_dict)
+
+        json_string = json.dumps(comment_list, indent=4)
+        file.write(json_string)
         file.close()
+
     except OSError:
-        print("Unable to create file \"%s\". Please check that the file path is valid.")
+        logger.info("Unable to create file \"%s\". Please check that the file path is valid.", file_path)
 
 
 def overwrite_comments(reddit):
     logger.info("Overwriting all comments...")
+    for comment in reddit.redditor(cfg['username']).comments.new(limit=1):
+        if comment != "[deleted]":
+            comment.edit("[deleted]")
 
 
 def main():
     reddit = connect()
     logger.info("Logged in as user \"u/%s\"...", cfg['username'])
     export_comments(reddit)
-    overwrite_comments(reddit)
+    #overwrite_comments(reddit)
+    logger.info("Finished successfully!")
 
 
 if __name__ == '__main__':

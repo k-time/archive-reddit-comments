@@ -50,7 +50,7 @@ def export_comments(reddit):
     try:
         file = open(file_path, 'a+')
         fields = ('subreddit_name_prefixed', 'link_title', 'link_id', 'link_url', 'name',
-                  'id', 'parent_id', 'created', 'created_utc', 'permalink', 'score', 'body',)
+                  'id', 'parent_id', 'created', 'created_utc', 'permalink', 'score', 'body')
         comment_list = []
         # Reddit PRAW API only allows you to retrieve last 1000 comments; TBD when they will allow all
         for comment in reddit.redditor(cfg['username']).comments.new(limit=None):
@@ -74,9 +74,9 @@ def export_comments(reddit):
 
 
 def overwrite_comments(reddit):
-    logger.info("Overwriting all comments...")
-    for comment in reddit.redditor(cfg['username']).comments.new(limit=1):
-        if comment != "[deleted]":
+    logger.info("Overwriting all comments (this may take a few minutes)...")
+    for comment in reddit.redditor(cfg['username']).comments.new(limit=None):
+        if comment.body != "[deleted]":
             comment.edit("[deleted]")
 
 
@@ -84,7 +84,7 @@ def main():
     reddit = connect()
     logger.info("Logged in as user \"u/%s\"...", cfg['username'])
     export_comments(reddit)
-    #overwrite_comments(reddit)
+    overwrite_comments(reddit)
     logger.info("Finished successfully!")
 
 

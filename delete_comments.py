@@ -1,8 +1,11 @@
 import argparse
+from collections import OrderedDict
 import json
 import logging
+from pprint import pprint
 import praw
 import sys
+import time
 import yaml
 
 # Set up logger
@@ -13,6 +16,7 @@ logger = logging.getLogger('DELETE_COMMENTS')
 with open('config.yaml', 'r') as cfg_file:
     cfg = yaml.load(cfg_file)
 
+
 def connect():
     # Authentication
     return praw.Reddit(
@@ -21,6 +25,7 @@ def connect():
             user_agent=cfg['user_agent'],
             username=cfg['username'],
             password=cfg['pw'])
+
 
 def get_file_path():
     # Command-line options parser
@@ -39,17 +44,50 @@ def get_file_path():
     else:
         return cfg['default_file_name']
 
-def save_and_delete_comments(file_path):
+
+def export_comments(reddit):
+    file_path = get_file_path()
+    logger.info("Saving all comments to file \"%s\"...", file_path)
     try:
-        file = open(file_path, 'w+')
+        file = open(file_path, 'a+')
+        fields = (
+            'subreddit_name_prefixed',
+            'link_title',
+            'link_id',
+            'link_url',
+            'name',
+            'id',
+            'parent_id',
+            'created',
+            'created_utc',
+            'permalink',
+            'score',
+            'body',)
+        for comment in reddit.redditor(cfg['username']).comments.new(limit=5):
+            comment_dict = vars(comment)
+            sub_dict = OrderedDict()
+            for field in fields:
+                sub_dict[field] = comment_dict[field]
+            sub_dict['permalink'] = 'https://www.reddit.com' + sub_dict['permalink']
+            # Convert to readable timestamp
+            sub_dict['local_time'] = time.strftime('%Y-%m-%d %I:%M:%S %p EST', time.localtime(sub_dict['created_utc']))
+            json_string = json.dumps(sub_dict, indent=4) + '\n'
+            file.write(json_string)
+        file.close()
     except OSError:
         print("Unable to create file \"%s\". Please check that the file path is valid.")
 
+
+def overwrite_comments(reddit):
+    logger.info("Overwriting all comments...")
+
+
 def main():
     reddit = connect()
-    file_path = get_file_path()
-    logger.info("Deleting comments for user \"u/%s\" and saving to file \"%s\"...", cfg['username'], file_path)
-    save_and_delete_comments(file_path)
+    logger.info("Logged in as user \"u/%s\"...", cfg['username'])
+    export_comments(reddit)
+    overwrite_comments(reddit)
+
 
 if __name__ == '__main__':
     main()

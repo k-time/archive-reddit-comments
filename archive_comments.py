@@ -28,7 +28,7 @@ def connect():
 
 def get_file_path():
     # Command-line options parser
-    parser = argparse.ArgumentParser(description='Reddit bot that searches and posts MMA scorecards.')
+    parser = argparse.ArgumentParser(description='Archives Reddit comments.')
     parser.add_argument('-p', '--path', dest='path', help='Set the path for the exported file.')
     args = parser.parse_args()
 

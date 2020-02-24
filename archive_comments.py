@@ -73,18 +73,18 @@ def export_comments(reddit):
         logger.info("Unable to create file \"%s\". Please check that the file path is valid.", file_path)
 
 
-def overwrite_comments(reddit):
+def overwrite_and_delete_comments(reddit):
     logger.info("Overwriting all comments (this may take a few minutes)...")
     for comment in reddit.redditor(cfg['username']).comments.new(limit=None):
         if comment.body != "[deleted]":
             comment.edit("[deleted]")
-
+        comment.delete()
 
 def main():
     reddit = connect()
     logger.info("Logged in as user \"u/%s\"...", cfg['username'])
     export_comments(reddit)
-    overwrite_comments(reddit)
+    overwrite_and_delete_comments(reddit)
     logger.info("Finished successfully!")
 
 

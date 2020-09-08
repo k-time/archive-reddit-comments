@@ -48,9 +48,15 @@ def get_file_path():
 
 def export_comments(reddit):
     file_path = get_file_path()
-    logger.info('Saving all comments to file "%s"...', file_path)
+    logger.info(f"Saving all comments to file {file_path}...")
+
     try:
         file = open(file_path, "a+")
+    except OSError:
+        logger.exception(f"Unable to create file {file_path}. Please check that the file path is valid.")
+        raise
+
+    with file:
         fields = (
             "subreddit_name_prefixed",
             "link_title",
@@ -66,7 +72,7 @@ def export_comments(reddit):
             "body",
         )
         comment_list = []
-        # Reddit PRAW API only allows you to retrieve last 1000 comments; TBD when they will allow all
+        # Reddit PRAW API only allows you to retrieve last 1000 comments
         for comment in reddit.redditor(cfg["username"]).comments.new(limit=None):
             if comment.body == "[deleted]":
                 continue
@@ -82,9 +88,6 @@ def export_comments(reddit):
         json_string = json.dumps(comment_list, indent=4)
         file.write(json_string)
         file.close()
-
-    except OSError:
-        logger.info('Unable to create file "%s". Please check that the file path is valid.', file_path)
 
 
 def overwrite_and_delete_comments(reddit):
@@ -108,7 +111,7 @@ def delete_comment_worker(comment, deleted_comment_count: int):
 
 def main():
     reddit = connect()
-    logger.info('Logged in as user "u/%s"...', cfg["username"])
+    logger.info(f"Logged in as user u/{cfg['username']}")
     export_comments(reddit)
     overwrite_and_delete_comments(reddit)
     logger.info("Finished successfully!")

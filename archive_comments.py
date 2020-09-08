@@ -106,7 +106,7 @@ def delete_comment_worker(comment, deleted_comment_count: int):
         comment.edit("[deleted]")
     comment.delete()
     # These can be out of order due to multithreading
-    print(f"Deleted comment #{deleted_comment_count}")
+    logger.info(f"Deleted comment #{deleted_comment_count}")
 
 
 def main():

@@ -1,16 +1,19 @@
+# Internal packages
 import argparse
-from collections import OrderedDict
 import json
 import logging
-import praw
 import sys
 import time
-import yaml
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
+
+# External packages
+import praw
+import yaml
 
 # Set up logger
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logger = logging.getLogger("DELETE_COMMENTS")
+logger = logging.getLogger("COMMENT_ARCHIVER")
 
 # Load configs
 with open("config.yaml", "r") as cfg_file:
@@ -87,7 +90,6 @@ def export_comments(reddit):
 
         json_string = json.dumps(comment_list, indent=4)
         file.write(json_string)
-        file.close()
 
 
 def overwrite_and_delete_comments(reddit):
@@ -97,7 +99,7 @@ def overwrite_and_delete_comments(reddit):
         for comment in reddit.redditor(cfg["username"]).comments.new(limit=1000):
             deleted_comment_count += 1
             executor.submit(delete_comment_worker, comment, deleted_comment_count)
-            # If you make requests too fast, you get rate-limited by reddit and it slows to a crawl
+            # If you make requests too fast, you get rate-limited by reddit (with backoff, so it slows to a crawl)
             time.sleep(1)
 
 
